@@ -24,7 +24,7 @@ use Symfony\Component\Security\Encoder\MessageDigestPasswordEncoder;
  * @fosuserbundlevalidation:Unique(property="username,email", message="The value for '%property%' already exists.", groups="Registration")
  * 
  */
-abstract class User implements AdvancedAccountInterface, UserInterface
+abstract class User implements UserInterface
 {
     const ROLE_DEFAULT    = 'ROLE_USER';
     const ROLE_SUPERADMIN = 'ROLE_SUPERADMIN';
