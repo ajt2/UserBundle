@@ -1,6 +1,6 @@
 <?php
 
-namespace Bundle\FOS\UserBundle\Validator\Doctrine\ORM;
+namespace Bundle\FOS\UserBundle\Validator;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
@@ -17,65 +17,43 @@ class UniqueValidatorTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    public function testAreTheSame()
+    public function testIsValid()
     {
         $fooA = new FooEntity();
-        $fooB = new FooEntity();
 
-        $validator = new UniqueValidator($this->getEntityManagerMock());
+        $constraint = $this->getMockBuilder('Bundle\FOS\UserBundle\Validator\Unique')->disableOriginalConstructor()->getMock();
 
-        $this->assertTrue($validator->areTheSame($fooA, $fooA));
-        $this->assertFalse($validator->areTheSame($fooA, $fooB));
+        $userManager = $this->getMockBuilder('Bundle\FOS\UserBundle\Entity\UserManager')->disableOriginalConstructor()->getMock();
+        $userManager->expects($this->once())
+            ->method('validateUnique')
+            ->with($fooA, $constraint)
+            ->will($this->returnValue(true))
+        ;
+
+        $validator = new UniqueValidator($userManager);
+
+        $this->assertTrue($validator->isValid($fooA, $constraint));
     }
 
-    public function testGetCriteria()
+    public function testIsNotValid()
     {
-        // $entity = new FooEntity();
+        $fooA = new FooEntity();
 
-        // $classMetadata = $this->getClassMetadataMock();
-        // $classMetadata->expects($this->any())
-        //               ->method('hasField')
-        //               ->with($this->equalTo('username'))
-        //               ->will($this->returnValue(true));
+        $constraint = $this->getMockBuilder('Bundle\FOS\UserBundle\Validator\Unique')->disableOriginalConstructor()->getMock();
+        $constraint->message = 'Foo!';
+        $constraint->property = 'Bar!';
 
-        // $classMetadata->expects($this->any())
-        //               ->method('getFieldValue')
-        //               ->with($this->isInstanceOf(get_class($entity)), 'username')
-        //               ->will($this->returnValue('john'));
+        $userManager = $this->getMockBuilder('Bundle\FOS\UserBundle\Entity\UserManager')->disableOriginalConstructor()->getMock();
+        $userManager->expects($this->once())
+            ->method('validateUnique')
+            ->with($fooA, $constraint)
+            ->will($this->returnValue(false))
+        ;
 
-        // $entityManager = $this->getEntityManagerMock();
-        // $entityManager->expects($this->any())
-        //               ->method('getClassMetadata')
-        //               ->will($this->returnValue($classMetadata));
+        $validator = new UniqueValidator($userManager);
 
-        // $validator = new UniqueValidator($entityManager);
-
-        // return $this->assertEquals(array('username' => 'john'), $validator->getCriteria($entity, array('username')));
-
-        $this->markTestIncomplete();
-    }
-
-    public function testExtractFieldNames()
-    {
-        $validator = new UniqueValidator($this->getEntityManagerMock());
-
-        $this->assertEquals(array('A', 'B', 'C'), $validator->extractFieldNames('A, B, C'));
-        $this->assertEquals(array('A', 'B', 'C'), $validator->extractFieldNames(' A,B,C '));
-        $this->assertEquals(array('A', 'B', 'C'), $validator->extractFieldNames(' A , B , C '));
-    }
-
-    protected function getEntityManagerMock()
-    {
-        return $this->getMock('Doctrine\ORM\EntityManager', array(), array(), '', false);
-    }
-
-    protected function getRepositoryMock()
-    {
-        return $this->getMock('Doctrine\ORM\EntityRepository', array(), array(), '', false);
-    }
-
-    protected function getClassMetadataMock()
-    {
-        return $this->getMock('Doctrine\ORM\Mapping\ClassMetadata', array(), array(), '', false);
+        $this->assertFalse($validator->isValid($fooA, $constraint));
+        $this->assertEquals($constraint->message, $validator->getMessageTemplate());
+        $this->assertEquals(array('property' => $constraint->property), $validator->getMessageParameters());
     }
 }
