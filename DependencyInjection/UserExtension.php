@@ -31,7 +31,7 @@ class UserExtension extends Extension
 
         // load all service configuration files (the db_driver first)
         if (!$container->hasDefinition('security.encoder.fos_user')) {
-            foreach (array('controller', 'templating', 'email', 'form', 'validator', 'security') as $basename) {
+            foreach (array('controller', 'templating', 'email', 'twig', 'form', 'validator', 'security') as $basename) {
                 $loader->load(sprintf('%s.xml', $basename));
             }
         }
@@ -41,12 +41,13 @@ class UserExtension extends Extension
             throw new \InvalidArgumentException('The user model class must be defined');
         }
 
-        // change authentication provider class to support multiple algorithms
-        $container->setParameter('security.authentication.provider.dao.class', 'Bundle\FOS\UserBundle\Security\Authentication\Provider\DaoAuthenticationProvider');
-
         // per default, we use a sha512 encoder, but you may change this here
         if (isset($config['encoder'])) {
-            $this->configurePasswordEncoder($config['encoder'], $container);
+            $this->remapParameters($config['encoder'], $container, array(
+                'algorithm' => 'fos_user.encoder.algorithm',
+                'encode-as-base64' => 'fos_user.encoder.encode_hash_as_base64',
+                'iterations' => 'fos_user.encoder.iterations',
+            ));
         }
 
         $this->remapParametersNamespaces($config, $container, array(
@@ -61,23 +62,6 @@ class UserExtension extends Extension
             'form'          => 'fos_user.form.%s.class',
             'controller'    => 'fos_user.controller.%s.class',
         ));
-    }
-
-    protected function configurePasswordEncoder($config, ContainerBuilder $container)
-    {
-        if (!is_array($config)) {
-            $container->setAlias('fos_user.encoder', 'security.encoder.'.$config);
-        } else {
-            if (isset($config['name'])) {
-                $container->setAlias('fos_user.encoder', 'security.encoder.'.$config['name']);
-            }
-
-            $this->remapParameters($config, $container, array(
-                'algorithm' => 'fos_user.encoder.algorithm',
-                'encodeHashAsBase64' => 'fos_user.encoder.encodeHashAsBase64',
-                'iterations' => 'fos_user.encoder.iterations',
-            ));
-        }
     }
 
     protected function remapParameters(array $config, ContainerBuilder $container, array $map)
