@@ -6,20 +6,11 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadata;
 
-class FooEntity {}
-
 class UniqueValidatorTest extends \PHPUnit_Framework_TestCase
 {
-    public function setup()
+    public function testEntityIsValid()
     {
-        if (!class_exists('\Doctrine\ORM\EntityManager')) {
-            $this->markTestSkipped('No ORM installed');
-        }
-    }
-
-    public function testIsValid()
-    {
-        $fooA = new FooEntity();
+        $fooA = new \stdClass();
 
         $constraint = $this->getMockBuilder('Bundle\FOS\UserBundle\Validator\Unique')->disableOriginalConstructor()->getMock();
 
@@ -35,9 +26,9 @@ class UniqueValidatorTest extends \PHPUnit_Framework_TestCase
         $this->assertTrue($validator->isValid($fooA, $constraint));
     }
 
-    public function testIsNotValid()
+    public function testEntityIsNotValid()
     {
-        $fooA = new FooEntity();
+        $fooA = new \stdClass();
 
         $constraint = $this->getMockBuilder('Bundle\FOS\UserBundle\Validator\Unique')->disableOriginalConstructor()->getMock();
         $constraint->message = 'Foo!';
@@ -55,5 +46,15 @@ class UniqueValidatorTest extends \PHPUnit_Framework_TestCase
         $this->assertFalse($validator->isValid($fooA, $constraint));
         $this->assertEquals($constraint->message, $validator->getMessageTemplate());
         $this->assertEquals(array('property' => $constraint->property), $validator->getMessageParameters());
+    }
+
+    public function testDocumentIsValid()
+    {
+        $this->markTestIncomplete('TODO implement');
+    }
+
+    public function testDocumentIsNotValid()
+    {
+        $this->markTestIncomplete('TODO implement');
     }
 }
