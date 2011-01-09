@@ -444,7 +444,7 @@ abstract class User implements AdvancedAccountInterface, UserInterface
      * @param User $user
      * @return boolean
      */
-    public function is(UserInterface $user = null)
+    public function isUser(UserInterface $user = null)
     {
         return null !== $user && $this->getUsername() === $user->getUsername();
     }

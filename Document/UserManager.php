@@ -94,7 +94,7 @@ class UserManager extends BaseUserManager
             }
         } else {
             // check if document in mongodb is the same document as the checked one
-            if ($document->isSame($value)) {
+            if ($document->isUser($value)) {
                 return true;
             }
             // check if returned document is proxy and initialize the minimum identifier if needed
