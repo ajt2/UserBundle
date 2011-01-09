@@ -83,7 +83,7 @@ class UserManager extends BaseUserManager
         }
 
         // there is no conflictual user which is not the same as the value
-        if ($this->anyIsUser($value, $users)) {
+        if (!is_string($value) && $this->anyIsUser($value, $users)) {
             return true;
         }
 
