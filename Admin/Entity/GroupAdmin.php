@@ -18,14 +18,14 @@ class GroupAdmin extends Admin
     
     protected $class = 'Application\FOS\UserBundle\Entity\Group';
 
-    protected $listFields = array(
+    protected $list = array(
         'name' => array('identifier' => true),
         'roles'
     );
 
-    protected $formFields = array(
+    protected $form = array(
         'name',
-        'roles'
+//        'roles'
     );
 
     // don't know yet how to get this value

@@ -20,7 +20,7 @@ class UserAdmin extends Admin
     
     protected $class = 'Application\FOS\UserBundle\Entity\User';
 
-    protected $listFields = array(
+    protected $list = array(
         'username' => array('identifier' => true),
         'email',
         'enabled',
@@ -28,7 +28,7 @@ class UserAdmin extends Admin
         'createdAt',
     );
 
-    protected $formFields = array(
+    protected $form = array(
         'username',
         'email',
         'enabled',
@@ -56,7 +56,7 @@ class UserAdmin extends Admin
         'validation_groups' => 'admin'
     );
 
-    protected $filterFields = array(
+    protected $filter = array(
         'username',
         'locked',
         'email',

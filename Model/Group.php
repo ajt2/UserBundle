@@ -65,4 +65,9 @@ abstract class Group implements GroupInterface
     {
         $this->roles = $roles;
     }
+
+    public function __toString()
+    {
+        return $this->name;
+    }
 }
