@@ -50,7 +50,8 @@ class UserController extends Controller
     public function editAction($username)
     {
         $user = $this->findUserBy('username', $username);
-        $form = $this->createForm($user);
+        $form = $this->get('fos_user.form.user');
+        $form->setData($user);
 
         return $this->render('FOSUserBundle:User:edit.html.'.$this->getEngine(), array(
             'form'      => $form,
@@ -64,8 +65,8 @@ class UserController extends Controller
     public function updateAction($username)
     {
         $user = $this->findUserBy('username', $username);
-        $form = $this->createForm($user);
-        $form->bind($this->get('request')->request->get($form->getName()));
+        $form = $this->get('fos_user.form.user');
+        $form->bind($this->get('request'), $user);
 
         if ($form->isValid()) {
             $this->get('fos_user.user_manager')->updateUser($user);
@@ -85,7 +86,9 @@ class UserController extends Controller
      */
     public function newAction()
     {
-        $form = $this->createForm();
+        $user = $this->get('fos_user.user_manager')->createUser();
+        $form = $this->get('fos_user.form.user_registration');
+        $form->setData($user);
 
         return $this->render('FOSUserBundle:User:new.html.'.$this->getEngine(), array(
             'form' => $form
@@ -97,23 +100,24 @@ class UserController extends Controller
      */
     public function createAction()
     {
-        $form = $this->createForm();
-        // TODO: fix once the FormFactory is updated
-        // $form->setValidationGroups('Registration');
-        $form->bind($this->get('request')->request->get($form->getName()));
+        $manager = $this->get('fos_user.user_manager');
+        $user = $manager->createUser();
+        $form = $this->get('fos_user.form.user_registration');
+        $form->bind($this->get('request'), $user);
+        $manager->updateCanonicalFields($user);
 
         if ($form->isValid()) {
             $user = $form->getData();
             if ($this->container->getParameter('fos_user.email.confirmation.enabled')) {
                 $user->setEnabled(false);
-                $this->get('fos_user.user_manager')->updateUser($user);
+                $manager->updateUser($user);
                 $this->sendConfirmationEmailMessage($user);
                 $this->get('session')->set('fos_user_send_confirmation_email/email', $user->getEmail());
                 $url = $this->generateUrl('fos_user_user_check_confirmation_email');
             } else {
                 $user->setConfirmationToken(null);
                 $user->setEnabled(true);
-                $this->get('fos_user.user_manager')->updateUser($user);
+                $manager->updateUser($user);
                 $this->authenticateUser($user);
                 $url = $this->generateUrl('fos_user_user_confirmed');
             }
@@ -209,7 +213,7 @@ class UserController extends Controller
     {
         $user = $this->getUser();
         $form = $this->createChangePasswordForm($user);
-        $form->bind($this->get('request')->request->get($form->getName()));
+        $form->bind($this->get('request'));
 
         if ($form->isValid()) {
             $user->setPlainPassword($form->getNewPassword());
@@ -239,7 +243,7 @@ class UserController extends Controller
      */
     public function sendResettingEmailAction()
     {
-        $user = $this->findUserBy('username', $this->get('request')->request->get('username'));
+        $user = $this->findUserBy('username', $this->get('request')->get('username'));
 
         if ($user->isPasswordRequestNonExpired($this->getPasswordRequestTtl())) {
             return $this->render('FOSUserBundle:User:passwordAlreadyRequested.html.'.$this->getEngine());
@@ -300,7 +304,7 @@ class UserController extends Controller
         }
 
         $form = $this->createResetPasswordForm($user);
-        $form->bind($this->get('request')->request->get($form->getName()));
+        $form->bind($this->get('request'));
 
         if ($form->isValid()) {
             $user->setPlainPassword($form->getNewPassword());
@@ -365,31 +369,14 @@ class UserController extends Controller
      */
     protected function authenticateUser(User $user, $reAuthenticate = false)
     {
-        $token = new UsernamePasswordToken($user, null, $user->getRoles());
+        $providerKey = $this->container->getParameter('fos_user.provider_key');
+        $token = new UsernamePasswordToken($user, null, $providerKey, $user->getRoles());
 
         if (true === $reAuthenticate) {
             $token->setAuthenticated(false);
         }
 
         $this->get('security.context')->setToken($token);
-    }
-
-    /**
-     * Create a UserForm instance and returns it
-     *
-     * @param User $object
-     * @return FOS\UserBundle\Form\UserForm
-     */
-    protected function createForm($object = null)
-    {
-        $form = $this->get('fos_user.form.user');
-        if (null === $object) {
-            $object = $this->get('fos_user.user_manager')->createUser();
-        }
-
-        $form->setData($object);
-
-        return $form;
     }
 
     protected function createChangePasswordForm(User $user)

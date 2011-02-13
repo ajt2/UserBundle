@@ -14,14 +14,6 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class FOSUserBundle extends Bundle
 {
-    public function boot()
-    {
-
-        $class = $this->container->get('fos_user.user_manager')->getClass();
-        if(class_exists($class)) {
-            call_user_func(array($class, 'setCanonicalizer'), $this->container->get('fos_user.util.canonicalizer'));
-        }
-    }
 
     public function getNamespace()
     {
@@ -30,6 +22,6 @@ class FOSUserBundle extends Bundle
 
     public function getPath()
     {
-        return strtr(__DIR__, '\\', '/');
+        return __DIR__;
     }
 }

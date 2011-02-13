@@ -23,10 +23,10 @@ Add the FOS namespace to your autoloader
 ----------------------------------------
 
 ::
-    // src/autoload.php
+    // app/autoload.php
     $loader->registerNamespaces(array(
-    'FOS' => __DIR__,
-    // your other namespaces
+        'FOS' => __DIR__.'/../src',
+        // your other namespaces
     );
 
 Add UserBundle to your application kernel
@@ -59,9 +59,9 @@ ORM User class:
 
 ::
 
-    // src/Application/MyBundle/Entity/User.php
+    // src/MyProject/MyBundle/Entity/User.php
 
-    namespace Application\MyBundle\Entity;
+    namespace MyProject\MyBundle\Entity;
     use FOS\UserBundle\Entity\User as BaseUser;
 
     /**
@@ -82,9 +82,9 @@ MongoDB User class:
 
 ::
 
-    // src/Application/MyBundle/Document/User.php
+    // src/MyProject/MyBundle/Document/User.php
 
-    namespace Application\MyBundle\Document;
+    namespace MyProject\MyBundle\Document;
     use FOS\UserBundle\Document\User as BaseUser;
 
     /**
@@ -99,11 +99,15 @@ MongoDB User class:
 Changing default class mappings
 -------------------------------
 
+** WARNING **
+This probably doesn't work anymore
+** WARNING **
+
 In case you want to change some of the default mappings, like for example the
 Group class ``id`` generator strategy one must simply replicate the default
 file inside an Application Bundle and then apply the necessary changes:
 
-    cp src/Bundle/FOS/UserBundle/Resources/config/doctrine/metadata/orm/Bundle.FOS.UserBundle.Entity.Group.dcm src/Application/..
+    cp src/FOS/UserBundle/Resources/config/doctrine/metadata/orm/Bundle.FOS.UserBundle.Entity.Group.dcm src/MyProject/..
 
 Configure your project
 ----------------------
@@ -137,18 +141,35 @@ along with the bundle containing your custom User class::
     # app/config/config.yml
     doctrine.orm:
         mappings:
-            UserBundle: ~
-            MyBundle:   ~
+            FOSUserBundle: ~
+            MyProjectMyBundle:   ~
             # your other bundles
 
 The above example assumes an ORM configuration, but the `mappings` configuration
 block would be the same for MongoDB ODM.
 
-Choose ORM or ODM database driver
----------------------------------
+Minimal configuration
+---------------------
 
-At a minimum, your configuration must define your DB driver ("orm" or "odm")
-and User class.
+At a minimum, your configuration must define your DB driver ("orm" or "mongodb"),
+a User class and the provider key. The provider key matches the key in the firewall
+configuration that is used for users with the UserController.
+
+For example for a security configuration like the following the provider_key would
+have to be set to "main", as shown in the proceeding examples:
+
+::
+
+    # app/config/config.yml
+    security.config:
+        providers:
+            fos_userbundle:
+                id: fos_user.user_manager
+
+        firewalls:
+            main:
+                form_login:
+                    provider: fos_userbundle
 
 ORM
 ~~~
@@ -160,9 +181,10 @@ In YAML:
     # app/config/config.yml
     fos_user.config:
         db_driver: orm
+        provider_key: main
         class:
             model:
-                user: Application\MyBundle\Entity\User
+                user: MyProject\MyBundle\Entity\User
 
 Or if you prefer XML:
 
@@ -170,9 +192,9 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db_driver="orm">
+    <fos_user:config db_driver="orm" provider_key="main">
         <fos_user:class>
-            <fos_user:model user="Application\MyBundle\Entity\User" />
+            <fos_user:model user="MyProject\MyBundle\Entity\User" />
         </fos_user:class>
     </fos_user:config>
 
@@ -186,9 +208,10 @@ In YAML:
     # app/config/config.yml
     fos_user.config:
         db_driver: mongodb
+        db_driver: orm
         class:
             model:
-                user: Application\MyBundle\Document\User
+                user: MyProject\MyBundle\Document\User
 
 Or if you prefer XML:
 
@@ -196,9 +219,9 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db_driver="mongodb">
+    <fos_user:config db_driver="mongodb" provider_key="main">
         <fos_user:class>
-            <fos_user:model user="Application\MyBundle\Document\User" />
+            <fos_user:model user="MyProject\MyBundle\Document\User" />
         </fos_user:model>
     </fos_user:config>
 
@@ -213,7 +236,7 @@ routes:
 
     # app/config/routing.yml
     fos_user_security:
-        resource: FOS/UserBundle/Resources/config/routing/security.xml
+        resource: @FOSUserBundle/Resources/config/routing/security.xml
 
 ::
 
@@ -293,7 +316,7 @@ All configuration options are listed below::
     db_driver: mongodb
     class:
         model:
-            user: Application\MyBundle\Document\User
+            user: MyProject\MyBundle\Document\User
         form:
             user:            ~
             change_password: ~
@@ -302,7 +325,8 @@ All configuration options are listed below::
             user:     ~
             security: ~
         util:
-            canonicalizer: ~
+            email_canonicalizer:    ~
+            username_canonicalizer: ~
     encoder:
         algorithm:        ~
         encode_as_base64: ~
@@ -324,14 +348,31 @@ All configuration options are listed below::
 Templating
 ----------
 
-The template names are not configurable, however Symfony2 by default searches for
-templates according to the ``kernel.bundle_dirs`` container parameter. This means
-it's possible to override any FOS\UserBundle template by simply mimicking the
-directory structure inside the Application directory:
+The template names are not configurable, however Symfony2 makes it possible
+to extend a bundle by creating a new Bundle and implementing a getParent()
+method inside that new Bundle's definition:
 
-For example ``src/Bundle/FOS/UserBundle/Resources/views/User/new.twig`` can be
+    class MyProjectUserBundle extends Bundle
+    {
+        public function getNamespace()
+        {
+            return __NAMESPACE__;
+        }
+
+        public function getPath()
+        {
+            return __DIR__;
+        }
+
+        public function getParent()
+        {
+            return 'FOSUserBundle';
+        }
+    }
+
+For example ``src/FOS/UserBundle/Resources/views/User/new.twig`` can be
 replaced inside an application by putting a file with alternative content in
-``src/Application/FOS/UserBundle/Resources/views/User/new.twig``.
+``src/MyProject/FOS/UserBundle/Resources/views/User/new.twig``.
 
 Validation
 ----------
@@ -340,13 +381,13 @@ The ``Resources/config/validation.xml`` file contains definitions for custom
 validator rules for various classes. The rules for the ``User`` class are all in
 the ``Registration`` validation group so you can choose not to use them.
 
-Canonicalizer
--------------
+Canonicalization
+----------------
 
-The ``Canonicalizer`` is used to canonicalize the username and the email in the
-database. The default one uses ``mb_convert_case``. You can change this
-behavior by changing the canonicalizer in your configuration. The canonicalizer
-must implement ``FOS\UserBundle\Util\CanonicalizerInterface``.
+``Canonicalizer`` services are used to canonicalize the username and the email
+fields for database storage. By default, username and email fields are canonicalized
+in the same manner using ``mb_convert_case()``. You may configure your own class
+for each field provided it implements ``FOS\UserBundle\Util\CanonicalizerInterface``.
 
 Note::
     If you do not have the mbstring extension installed you will need to

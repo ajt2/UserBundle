@@ -19,13 +19,23 @@ abstract class UserManager implements UserManagerInterface, UserProviderInterfac
 {
     protected $encoderFactory;
     protected $algorithm;
-    protected $canonicalizer;
+    protected $usernameCanonicalizer;
+    protected $emailCanonicalizer;
 
-    public function __construct(EncoderFactoryInterface $encoderFactory, $algorithm, CanonicalizerInterface $canonicalizer)
+    /**
+     * Constructor.
+     *
+     * @param EncoderFactoryInterface $encoderFactory
+     * @param string                  $algorithm
+     * @param CanonicalizerInterface  $usernameCanonicalizer
+     * @param CanonicalizerInterface  $emailCanonicalizer
+     */
+    public function __construct(EncoderFactoryInterface $encoderFactory, $algorithm, CanonicalizerInterface $usernameCanonicalizer, CanonicalizerInterface $emailCanonicalizer)
     {
         $this->encoderFactory = $encoderFactory;
         $this->algorithm = $algorithm;
-        $this->canonicalizer = $canonicalizer;
+        $this->usernameCanonicalizer = $usernameCanonicalizer;
+        $this->emailCanonicalizer = $emailCanonicalizer;
     }
 
     /**
@@ -50,7 +60,7 @@ abstract class UserManager implements UserManagerInterface, UserProviderInterfac
      */
     public function findUserByEmail($email)
     {
-        return $this->findUserBy(array('emailCanonical' => $this->canonicalizer->canonicalize($email)));
+        return $this->findUserBy(array('emailCanonical' => $this->emailCanonicalizer->canonicalize($email)));
     }
 
     /**
@@ -61,7 +71,7 @@ abstract class UserManager implements UserManagerInterface, UserProviderInterfac
      */
     public function findUserByUsername($username)
     {
-        return $this->findUserBy(array('usernameCanonical' => $this->canonicalizer->canonicalize($username)));
+        return $this->findUserBy(array('usernameCanonical' => $this->usernameCanonicalizer->canonicalize($username)));
     }
 
     /**
@@ -99,7 +109,7 @@ abstract class UserManager implements UserManagerInterface, UserProviderInterfac
             throw new UnsupportedAccountException('Account is not supported.');
         }
 
-        return $this->loadUserByUsername((string) $user);
+        return $this->loadUserByUsername($user->getUsername());
     }
 
     /**
@@ -126,14 +136,28 @@ abstract class UserManager implements UserManagerInterface, UserProviderInterfac
     /**
      * {@inheritDoc}
      */
+    public function updateCanonicalFields(UserInterface $user)
+    {
+        $user->setUsernameCanonical($this->usernameCanonicalizer->canonicalize($user->getUsername()));
+        $user->setEmailCanonical($this->emailCanonicalizer->canonicalize($user->getEmail()));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function updatePassword(UserInterface $user)
     {
         if (0 !== strlen($password = $user->getPlainPassword())) {
             $user->setAlgorithm($this->algorithm);
-            $encoder = $this->encoderFactory->getEncoder($user);
+            $encoder = $this->getEncoder($user);
             $user->setPassword($encoder->encodePassword($password, $user->getSalt()));
             $user->eraseCredentials();
         }
+    }
+
+    protected function getEncoder(UserInterface $user)
+    {
+        return $this->encoderFactory->getEncoder($user);
     }
 
     /**
