@@ -50,8 +50,9 @@ Create your User class
 
 You must create a User class that extends either the entity or document
 abstract User class in UserBundle.  All fields on the base class are mapped,
-except for ``id``; this is intentional, so you can select the generator that best
-suits your application.  Feel free to add additional properties and methods to
+except for ``id`` and ``groups``; this is intentional, so you can select the generator that best
+suits your application, and are able to use a custom Group model class.
+Feel free to add additional properties and methods to
 your custom class.
 
 ORM User class:
@@ -75,6 +76,15 @@ ORM User class:
          * @orm:generatedValue(strategy="AUTO")
          */
         protected $id;
+
+        /**
+         * @ManyToMany(targetEntity="FOS\UserBundle\Entity\DefaultGroup" field="groups")
+         * @JoinTable(name="fos_user_user_group",
+         *      joinColumns={@JoinColumn(name="user_id", referencedColumnName="id")},
+         *      inverseJoinColumns={@JoinColumn(name="group_id", referencedColumnName="id")}
+         * )
+         */
+        protected $groups;
     }
 
 MongoDB User class:
@@ -94,6 +104,9 @@ MongoDB User class:
     {
         /** @mongodb:Id(strategy="auto") */
         protected $id;
+
+        /** @mongodb:ReferenceMany(targetDocument="FOS\UserBundle\Document\DefaultGroup") */
+        protected $groups;
     }
 
 Changing default class mappings
@@ -113,7 +126,17 @@ Configure your project
 ----------------------
 
 The UserBundle works with the Symfony Security Component, so make sure that is
-enabled in your project's configuration::
+enabled in your kernel and in your project's configuration::
+
+    // app/AppKernel.php
+    public function registerBundles()
+    {
+        return array(
+            // ...
+            new Symfony\Bundle\SecurityBundle\SecurityBundle(),
+            // ...
+        );
+    }
 
     # app/config/config.yml
     security.config:
@@ -122,8 +145,9 @@ enabled in your project's configuration::
                 id: fos_user.user_manager
 
 The login form and all the routes used to create a user and reset the password
-have to be available to unauthenticated users. Assuming you import the user.xml
-routing file with the ``/user`` prefix they will be::
+have to be available to unauthenticated users but using the same firewall as
+the pages you want to securize with the bundle. Assuming you import the
+user.xml routing file with the ``/user`` prefix they will be::
 
     /login
     /user/new
@@ -185,6 +209,7 @@ In YAML:
         class:
             model:
                 user: MyProject\MyBundle\Entity\User
+                group: FOS\UserBundle\Entity\DefaultGroup
 
 Or if you prefer XML:
 
@@ -195,6 +220,7 @@ Or if you prefer XML:
     <fos_user:config db_driver="orm" provider_key="main">
         <fos_user:class>
             <fos_user:model user="MyProject\MyBundle\Entity\User" />
+            <fos_user:model group="FOS\UserBundle\Entity\DefaultGroup" />
         </fos_user:class>
     </fos_user:config>
 
@@ -208,10 +234,11 @@ In YAML:
     # app/config/config.yml
     fos_user.config:
         db_driver: mongodb
-        db_driver: orm
+        provider_key: main
         class:
             model:
                 user: MyProject\MyBundle\Document\User
+                group: FOS\UserBundle\Document\DefaultGroup
 
 Or if you prefer XML:
 
@@ -222,6 +249,7 @@ Or if you prefer XML:
     <fos_user:config db_driver="mongodb" provider_key="main">
         <fos_user:class>
             <fos_user:model user="MyProject\MyBundle\Document\User" />
+            <fos_user:model group="FOS\UserBundle\Entity\DefaultGroup" />
         </fos_user:model>
     </fos_user:config>
 
@@ -313,17 +341,20 @@ Configuration example:
 
 All configuration options are listed below::
 
-    db_driver: mongodb
+    db_driver:    mongodb
+    provider_key: fos_user
     class:
         model:
             user: MyProject\MyBundle\Document\User
         form:
             user:            ~
+            group:           ~
             change_password: ~
             reset_password:  ~
         controller:
             user:     ~
             security: ~
+            group:    ~
         util:
             email_canonicalizer:    ~
             username_canonicalizer: ~
@@ -333,14 +364,19 @@ All configuration options are listed below::
         iterations:       ~
     form_name:
         user:            ~
+        group:           ~
         change_password: ~
+        reset_password:  ~
+    form_validation_groups:
+        user: ~             # This value is an array of groups
     email:
-        from_email: ~
+        from_email: ~       # { email: name }
         confirmation:
             enabled:    ~
             template:   ~
         resetting_password:
             template:   ~
+            token_ttl:  ~
     template:
         engine: ~
         theme:  ~
@@ -354,16 +390,6 @@ method inside that new Bundle's definition:
 
     class MyProjectUserBundle extends Bundle
     {
-        public function getNamespace()
-        {
-            return __NAMESPACE__;
-        }
-
-        public function getPath()
-        {
-            return __DIR__;
-        }
-
         public function getParent()
         {
             return 'FOSUserBundle';
@@ -373,6 +399,9 @@ method inside that new Bundle's definition:
 For example ``src/FOS/UserBundle/Resources/views/User/new.twig`` can be
 replaced inside an application by putting a file with alternative content in
 ``src/MyProject/FOS/UserBundle/Resources/views/User/new.twig``.
+
+You can use a different templating engine by configuring it but you will have to
+create all the needed templates as only twig templates are provided.
 
 Validation
 ----------
