@@ -16,7 +16,7 @@ use Sonata\BaseApplicationBundle\Admin\EntityAdmin as Admin;
 class GroupAdmin extends Admin
 {
     
-    protected $class = 'Application\FOS\UserBundle\Entity\Group';
+    protected $class = 'Application\FOS\UserBundle\Entity\DefaultGroup';
 
     protected $list = array(
         'name' => array('identifier' => true),

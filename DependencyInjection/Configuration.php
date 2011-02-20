@@ -23,7 +23,7 @@ class Configuration
     public function getConfigTree()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('fos_user:config', 'array');
+        $rootNode = $treeBuilder->root('fos_user', 'array');
 
         $rootNode
             ->scalarNode('db_driver')->cannotBeOverwritten()->isRequired()->cannotBeEmpty()->end()
@@ -114,7 +114,22 @@ class Configuration
                 ->arrayNode('user')
                     ->addDefaultsIfNotSet()
                     ->prototype('scalar')->end()
-                    ->defaultValue(array ('Registration'))
+                    ->defaultValue(array('Registration'))
+                ->end()
+                ->arrayNode('change_password')
+                    ->addDefaultsIfNotSet()
+                    ->prototype('scalar')->end()
+                    ->defaultValue(array('ChangePassword'))
+                ->end()
+                ->arrayNode('reset_password')
+                    ->addDefaultsIfNotSet()
+                    ->prototype('scalar')->end()
+                    ->defaultValue(array('ResetPassword'))
+                ->end()
+                ->arrayNode('group')
+                    ->addDefaultsIfNotSet()
+                    ->prototype('scalar')->end()
+                    ->defaultValue(array('Registration'))
                 ->end()
             ->end();
     }
@@ -126,10 +141,16 @@ class Configuration
                 ->addDefaultsIfNotSet()
                 ->arrayNode('from_email')
                     ->addDefaultsIfNotSet()
-                    ->prototype('scalar')->end()
+                    ->useAttributeAsKey('adress')
+                    ->prototype('scalar')
+                        ->beforeNormalization()
+                            ->ifTrue(function ($v) { return is_array($v) && isset ($v['name']); })
+                            ->then(function ($v) { return $v['name']; })
+                        ->end()
+                    ->end()
                     ->defaultValue(array('webmaster@example.com' => 'webmaster'))
                 ->end()
-                ->arrayNode('change_password')
+                ->arrayNode('confirmation')
                     ->addDefaultsIfNotSet()
                     ->booleanNode('enabled')->defaultFalse()->end()
                     ->scalarNode('template')->defaultValue('FOSUserBundle:User:confirmationEmail')->end()
