@@ -2,8 +2,8 @@
 
 namespace FOS\UserBundle\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\Configuration\Builder\NodeBuilder;
-use Symfony\Component\DependencyInjection\Configuration\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\Builder\NodeBuilder;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * This class contains the configuration information for the bundle
@@ -141,7 +141,7 @@ class Configuration
                 ->addDefaultsIfNotSet()
                 ->arrayNode('from_email')
                     ->addDefaultsIfNotSet()
-                    ->useAttributeAsKey('adress')
+                    ->useAttributeAsKey('address')
                     ->prototype('scalar')
                         ->beforeNormalization()
                             ->ifTrue(function ($v) { return is_array($v) && isset ($v['name']); })
