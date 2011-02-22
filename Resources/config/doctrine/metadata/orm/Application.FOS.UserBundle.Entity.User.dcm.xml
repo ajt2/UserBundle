@@ -10,7 +10,7 @@
             <generator strategy="AUTO" />
         </id>
 
-        <many-to-many target-entity="DefaultGroup" field="groups">
+        <many-to-many target-entity="Group" field="groups">
             <join-table name="fos_user_user_group">
                 <join-columns>
                     <join-column name="user_id" referenced-column-name="id" />

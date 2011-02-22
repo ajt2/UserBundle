@@ -501,7 +501,7 @@ abstract class User implements UserInterface
         $this->algorithm = $algorithm;
     }
 
-    public function setCredentialsExpireAt(\DateTime $date)
+    public function setCredentialsExpireAt(\DateTime $date = null)
     {
         $this->credentialsExpireAt = $date;
     }

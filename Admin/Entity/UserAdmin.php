@@ -18,8 +18,6 @@ class UserAdmin extends Admin
 
     protected $maxPerPage = 25;
     
-    protected $class = 'Application\FOS\UserBundle\Entity\User';
-
     protected $list = array(
         'username' => array('identifier' => true),
         'email',
@@ -63,8 +61,6 @@ class UserAdmin extends Admin
         'id',
     );
 
-    // don't know yet how to get this value
-    protected $baseControllerName = 'FOSUserBundle:UserAdmin';
 
     public function preInsert($user)
     {
