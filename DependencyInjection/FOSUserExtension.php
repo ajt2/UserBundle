@@ -24,9 +24,12 @@ class FOSUserExtension extends Extension
         }
         $loader->load(sprintf('%s.xml', $config['db_driver']));
 
-        // load all service configuration files (the db_driver first)
-        foreach (array('controller', 'templating', 'twig', 'form', 'validator', 'security', 'util') as $basename) {
+        foreach (array('controller', 'templating', 'twig', 'form', 'validator', 'security', 'util', 'listener') as $basename) {
             $loader->load(sprintf('%s.xml', $basename));
+        }
+
+        if (!empty($config['service']['util']['mailer'])) {
+            $container->setAlias('fos_user.util.mailer', $config['service']['util']['mailer']);
         }
 
         $this->remapParametersNamespaces($config, $container, array(
