@@ -11,7 +11,7 @@
 
 namespace FOS\UserBundle\Admin\Entity;
 
-use Sonata\BaseApplicationBundle\Admin\EntityAdmin as Admin;
+use Sonata\AdminBundle\Admin\Admin;
 
 class UserAdmin extends Admin
 {
@@ -61,11 +61,22 @@ class UserAdmin extends Admin
         'id',
     );
 
+    protected $userManager;
 
     public function preInsert($user)
     {
         parent::preInsert($user);
 
-        $this->container->get('fos_user.user_manager')->updatePassword($user);
+        $this->getIdParameter()->updatePassword($user);
+    }
+
+    public function setUserManager($userManager)
+    {
+        $this->userManager = $userManager;
+    }
+
+    public function getUserManager()
+    {
+        return $this->userManager;
     }
 }

@@ -11,7 +11,7 @@
 
 namespace FOS\UserBundle\Admin\Entity;
 
-use Sonata\BaseApplicationBundle\Admin\EntityAdmin as Admin;
+use Sonata\AdminBundle\Admin\Admin;
 
 class GroupAdmin extends Admin
 {
@@ -30,6 +30,6 @@ class GroupAdmin extends Admin
     {
         $class = $this->getClass();
 
-        return new $class('');
+        return new $class('', array());
     }
 }

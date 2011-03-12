@@ -1,13 +1,13 @@
-BaseApplicationBundle Integration
+AdminBundle Integration
 ----------------------------------------
 
-This current fork integrates the BaseApplicationBundle Admin class.
+This current fork integrates the AdminBundle Admin class.
 
 Edit your admin.yml file and these lines :
 
 ::
 
-    sonata_base_application:
+    sonata_admin:
         entities:
 
             user:
