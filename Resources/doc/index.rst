@@ -12,20 +12,21 @@ Features
 Installation
 ============
 
-Add UserBundle to your src/ dir
+Add UserBundle to your vendor/bundles/ dir
 -------------------------------------
 
 ::
 
-    $ git submodule add git://github.com/FriendsOfSymfony/UserBundle.git src/FOS/UserBundle
+    $ git submodule add git://github.com/FriendsOfSymfony/UserBundle.git vendor/bundles/FOS/UserBundle
 
 Add the FOS namespace to your autoloader
 ----------------------------------------
 
 ::
+
     // app/autoload.php
     $loader->registerNamespaces(array(
-        'FOS' => __DIR__.'/../src',
+        'FOS' => __DIR__.'/../vendor/bundles',
         // your other namespaces
     );
 
@@ -50,9 +51,9 @@ Create your User class
 
 You must create a User class that extends either the entity or document abstract
 User class in UserBundle.  All fields on the base class are mapped, except for
-``id`` and ``groups``; this is intentional, so you can select the generator that
-best suits your application, and are able to use a custom Group model class.
-Feel free to add additional properties and methods to your custom class.
+``id``; this is intentional, so you can select the generator that best suits
+your application. Feel free to add additional properties and methods to your
+custom class.
 
 ORM User class:
 ~~~~~~~~~~~~~~~
@@ -75,15 +76,6 @@ ORM User class:
          * @orm:generatedValue(strategy="AUTO")
          */
         protected $id;
-
-        /**
-         * @orm:ManyToMany(targetEntity="FOS\UserBundle\Entity\DefaultGroup")
-         * @orm:JoinTable(name="fos_user_user_group",
-         *      joinColumns={@orm:JoinColumn(name="user_id", referencedColumnName="id")},
-         *      inverseJoinColumns={@orm:JoinColumn(name="group_id", referencedColumnName="id")}
-         * )
-         */
-        protected $groups;
     }
 
 MongoDB User class:
@@ -103,19 +95,7 @@ MongoDB User class:
     {
         /** @mongodb:Id(strategy="auto") */
         protected $id;
-
-        /** @mongodb:ReferenceMany(targetDocument="FOS\UserBundle\Document\DefaultGroup") */
-        protected $groups;
     }
-
-Group class
------------
-
-To customize the Group class you can define your own entity extending the mapped
-superclass of the Bundle ``FOS\UserBundle\Entity\Group``. If you don't want to
-extend it you can use the entity provided by the bundle which is
-``FOS\UserBundle\Entity\DefaultGroup``.
-Same is available for MongoDB in the ``Document`` subnamespace.
 
 Configure your project
 ----------------------
@@ -136,7 +116,8 @@ enabled in your kernel and in your project's configuration::
     # app/config/config.yml
     security:
         providers:
-            fos_user:
+            # the naming of a security provider is up to you, we chose "fos_userbundle"
+            fos_userbundle:
                 id: fos_user.user_manager
 
 Note::
@@ -167,22 +148,28 @@ along with the bundle containing your custom User class::
     doctrine:
         orm:
             mappings:
-                FOSUserBundle: ~
-                MyProjectMyBundle:   ~
+                FOSUser: ~
+                MyProjectMy:   ~
                 # your other bundles
 
-The above example assumes an ORM configuration, but the `mappings` configuration
-block would be the same for MongoDB ODM.
+The above example assumes an ORM configuration, but the ``mappings``
+configuration block would be the same for MongoDB ODM.
 
 Minimal configuration
 ---------------------
 
 At a minimum, your configuration must define your DB driver ("orm" or "mongodb"),
-a User class and the provider key. The provider key matches the key in the firewall
-configuration that is used for users with the UserController.
+a User class and the provider key. The provider key matches the key in the
+firewall configuration that is used for users with the UserController.
 
-For example for a security configuration like the following the provider_key would
-have to be set to "fos_userbundle", as shown in the proceeding examples:
+The provider key needs to be configured so that the UserBundle can determine
+against what firewall the user should be authenticated after activating the
+account for example. This means that out of the box UserBundle only supports
+being used for a single firewall, though with a custom Controller this
+limitation can be circumvented.
+
+For example for a security configuration like the following the provider_key
+would have to be set to "main", as shown in the proceeding examples:
 
 ::
 
@@ -207,11 +194,10 @@ In YAML:
     # app/config/config.yml
     fos_user:
         db_driver: orm
-        provider_key: fos_userbundle
+        provider_key: main
         class:
             model:
                 user: MyProject\MyBundle\Entity\User
-                group: FOS\UserBundle\Entity\DefaultGroup
 
 Or if you prefer XML:
 
@@ -219,11 +205,10 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db-driver="orm" provider-key="fos_userbundle">
+    <fos_user:config db-driver="orm" provider-key="main">
         <fos_user:class>
             <fos_user:model
                 user="MyProject\MyBundle\Entity\User"
-                group="FOS\UserBundle\Entity\DefaultGroup"
             />
         </fos_user:class>
     </fos_user:config>
@@ -238,11 +223,10 @@ In YAML:
     # app/config/config.yml
     fos_user:
         db_driver: mongodb
-        provider_key: fos_userbundle
+        provider_key: main
         class:
             model:
                 user: MyProject\MyBundle\Document\User
-                group: FOS\UserBundle\Document\DefaultGroup
 
 Or if you prefer XML:
 
@@ -250,11 +234,10 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db-driver="mongodb" provider-key="fos_userbundle">
+    <fos_user:config db-driver="mongodb" provider-key="main">
         <fos_user:class>
             <fos_user:model
                 user="MyProject\MyBundle\Document\User"
-                group="FOS\UserBundle\Entity\DefaultGroup"
             />
         </fos_user:class>
     </fos_user:config>
@@ -270,23 +253,20 @@ routes:
 
     # app/config/routing.yml
     fos_user_security:
-        resource: @FOSUserBundle/Resources/config/routing/security.xml
+        resource: @FOSUser/Resources/config/routing/security.xml
 
     fos_user_user:
-        resource: @FOSUserBundle/Resources/config/routing/user.xml
+        resource: @FOSUser/Resources/config/routing/user.xml
         prefix: /user
 
 ::
 
     # app/config/routing.xml
 
-    <import resource="@FOSUserBundle/Resources/config/routing/security.xml"/>
-    <import resource="@FOSUserBundle/Resources/config/routing/user.xml" prefix="/user" />
+    <import resource="@FOSUser/Resources/config/routing/security.xml"/>
+    <import resource="@FOSUser/Resources/config/routing/user.xml" prefix="/user" />
 
 You now can login at http://app.com/login
-
-You can also import the group.xml file to use the builtin controllers to
-manipulate the groups.
 
 Command line
 ============
@@ -347,27 +327,169 @@ A new instance of your User class can be created by the user manager::
 
 `$user` is now an Entity or a Document, depending on the configuration.
 
+Using groups
+============
+
+The bundle allows to optionnally use groups. You need to explicitly
+enable it in your configuration by giving the Group class which must
+implement ``FOS\UserBundle\Model\GroupInterface``.
+
+In YAML:
+
+::
+
+    # app/config/config.yml
+    fos_user:
+        db_driver: orm
+        provider_key: main
+        class:
+            model:
+                user: MyProject\MyBundle\Entity\User
+        group:
+            class:
+                model: MyProject\MyBundle\Entity\Group
+
+Or if you prefer XML:
+
+::
+
+    # app/config/config.xml
+
+    <fos_user:config db-driver="orm" provider-key="main">
+        <fos_user:class>
+            <fos_user:model
+                user="MyProject\MyBundle\Entity\User"
+            />
+        </fos_user:class>
+        <fos_user:group>
+            <fos_user:class model="MyProject\MyBundle\Entity\Group" />
+        </fos_user:group>
+    </fos_user:config>
+
+The Group class
+---------------
+
+The simpliest way is to extend the mapped superclass provided by the
+bundle.
+
+ORM
+~~~
+
+::
+
+    // src/MyProject/MyBundle/Entity/Group.php
+
+    namespace MyProject\MyBundle\Entity;
+    use FOS\UserBundle\Entity\Group as BaseGroup;
+
+    /**
+     * @orm:Entity
+     */
+    class Group extends BaseGroup
+    {
+    }
+
+ODM
+~~~
+
+::
+
+    // src/MyProject/MyBundle/Document/Group.php
+
+    namespace MyProject\MyBundle\Document;
+    use FOS\UserBundle\Document\Group as BaseGroup;
+
+    /**
+     * @mongodb:Document
+     */
+    class Group extends BaseGroup
+    {
+    }
+
+Defining the relation
+---------------------
+
+The next step is to map the relation in your User class.
+
+ORM
+~~~
+
+::
+
+    // src/MyProject/MyBundle/Entity/User.php
+
+    namespace MyProject\MyBundle\Entity;
+    use FOS\UserBundle\Entity\User as BaseUser;
+
+    /**
+     * @orm:Entity
+     */
+    class User extends BaseUser
+    {
+        /**
+         * @orm:Id
+         * @orm:Column(type="integer")
+         * @orm:generatedValue(strategy="AUTO")
+         */
+        protected $id;
+
+        /**
+         * @orm:ManyToMany(targetEntity="MyProject\MyBundle\Entity\Group")
+         * @orm:JoinTable(name="fos_user_user_group",
+         *      joinColumns={@orm:JoinColumn(name="user_id", referencedColumnName="id")},
+         *      inverseJoinColumns={@orm:JoinColumn(name="group_id", referencedColumnName="id")}
+         * )
+         */
+        protected $groups;
+    }
+
+ODM
+~~~
+
+::
+
+    // src/MyProject/MyBundle/Document/User.php
+
+    namespace MyProject\MyBundle\Document;
+    use FOS\UserBundle\Document\User as BaseUser;
+
+    /**
+     * @mongodb:Document
+     */
+    class User extends BaseUser
+    {
+        /** @mongodb:Id(strategy="auto") */
+        protected $id;
+
+        /** @mongodb:ReferenceMany(targetDocument="MyProject\MyBundle\Document\Group") */
+        protected $groups;
+    }
+
+Enabling the routing for the GroupController
+--------------------------------------------
+
+You can also the group.xml file to use the builtin controller to manipulate the
+groups.
+
 Configuration example:
 ======================
 
 All configuration options are listed below::
 
+    # app/config/config.yml
     fos_user:
         db_driver:    mongodb
         provider_key: fos_userbundle
         class:
             model:
                 user:  MyProject\MyBundle\Document\User
-                group: MyProject\MyBundle\Document\Group
             form:
                 user:            ~
-                group:           ~
                 change_password: ~
                 reset_password:  ~
             controller:
                 user:     ~
                 security: ~
-                group:    ~
             util:
                 email_canonicalizer:    ~
                 username_canonicalizer: ~
@@ -380,7 +502,6 @@ All configuration options are listed below::
             iterations:       ~
         form_name:
             user:            ~
-            group:           ~
             change_password: ~
             reset_password:  ~
         form_validation_groups:
@@ -396,25 +517,75 @@ All configuration options are listed below::
         template:
             engine: ~
             theme:  ~
+        group:
+            class:
+                model: MyProject\MyBundle\Document\Group
+                controller: ~
+                form: ~
+            form_name: ~
+            form_validation_groups: ~
+
+Security configuration
+----------------------
+
+Here is an example of a full security configuration using FOSUserBundle::
+
+    # app/config/security.yml
+    security:
+        providers:
+            fos_userbundle:
+                id: fos_user.user_manager
+
+        firewalls:
+            main:
+                pattern:      .*
+                form-login:
+                    provider:       fos_userbundle
+                    login_path:     /login
+                    use_forward:    false
+                    check_path:     /login_check
+                    failure_path:   null
+                logout:       true
+                anonymous:    true
+
+        access_control:
+            # The WDT has to be allowed to anonymous users to avoid requiring the login with the AJAX request
+            - { path: /_wdt/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /_profiler/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            # URL of the bundles which need to be available to anonymous users
+            - { path: /login, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /login_check, role: IS_AUTHENTICATED_ANONYMOUSLY } # for the case of a failed login
+            - { path: /user/new, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/check-confirmation-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/confirm/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/confirmed, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/request-reset-password, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/send-resetting-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/check-resetting-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: /user/reset-password/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            # Secured part of the site (all site here and an admin part for admin users)
+            - { path: /admin/.*, role: ROLE_ADMIN }
+            - { path: /.*, role: ROLE_USER }
+
+        role_hierarchy:
+            ROLE_ADMIN:       ROLE_USER
+            ROLE_SUPERADMIN:  ROLE_ADMIN
+
+Replacing some part by your own implementation:
+===============================================
 
 Templating
 ----------
 
 The template names are not configurable, however Symfony2 makes it possible
-to extend a bundle by creating a new Bundle and implementing a getParent()
-method inside that new Bundle's definition:
+to extend a bundle by defining a template in the app/ directory.
 
-    class MyProjectUserBundle extends Bundle
-    {
-        public function getParent()
-        {
-            return 'FOSUserBundle';
-        }
-    }
-
-For example ``src/FOS/UserBundle/Resources/views/User/new.twig`` can be
+For example ``vendor/bundles/FOS/UserBundle/Resources/views/User/new.twig`` can be
 replaced inside an application by putting a file with alternative content in
-``src/MyProject/FOS/UserBundle/Resources/views/User/new.twig``.
+``app/Resources/FOSUser/views/User/new.twig``.
+
+You could also create a bundle defined as child of FOSUserBundle and placing the
+templates in it.
 
 You can use a different templating engine by configuring it but you will have to
 create all the needed templates as only twig templates are provided.
@@ -444,10 +615,12 @@ Canonicalization
 ----------------
 
 ``Canonicalizer`` services are used to canonicalize the username and the email
-fields for database storage. By default, username and email fields are canonicalized
-in the same manner using ``mb_convert_case()``. You may configure your own class
-for each field provided it implements ``FOS\UserBundle\Util\CanonicalizerInterface``.
+fields for database storage. By default, username and email fields are
+canonicalized in the same manner using ``mb_convert_case()``. You may configure
+your own class for each field provided it implements
+``FOS\UserBundle\Util\CanonicalizerInterface``.
 
 Note::
+
     If you do not have the mbstring extension installed you will need to
     define your own ``canonicalizer``.

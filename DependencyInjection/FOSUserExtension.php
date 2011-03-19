@@ -26,12 +26,24 @@ class FOSUserExtension extends Extension
 
         $loader->load(sprintf('admin_%s.xml', $config['db_driver']));
 
-        foreach (array('controller', 'templating', 'twig', 'form', 'validator', 'security', 'util', 'listener') as $basename) {
+        foreach (array('controller', 'form', 'validator', 'security', 'util', 'listener') as $basename) {
             $loader->load(sprintf('%s.xml', $basename));
         }
 
         if (!empty($config['service']['util']['mailer'])) {
             $container->setAlias('fos_user.util.mailer', $config['service']['util']['mailer']);
+        }
+
+        if (!empty($config['group'])) {
+            $loader->load('group.xml');
+            $loader->load(sprintf('%s_group.xml', $config['db_driver']));
+            $this->remapParametersNamespaces($config['group'], $container, array(
+                'class' => 'fos_user.%s.group.class',
+                '' => array(
+                    'form_name' => 'fos_user.form.group.name',
+                    'form_validation_groups' => 'fos_user.form.group.validation_groups'
+                ),
+            ));
         }
 
         $this->remapParametersNamespaces($config, $container, array(

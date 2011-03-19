@@ -49,8 +49,8 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
     public function testUserLoadThrowsExceptionUnlessGroupModelClassSet()
     {
         $loader = new FOSUserExtension();
-        $config = $this->getEmptyConfig();
-        unset($config['class']['model']['group']);
+        $config = $this->getFullConfig();
+        unset($config['group']['class']['model']);
         $loader->load(array($config), new ContainerBuilder());
     }
 
@@ -98,7 +98,6 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertParameter('FOS\UserBundle\Form\UserForm', 'fos_user.form.user.class');
-        $this->assertParameter('FOS\UserBundle\Form\GroupForm', 'fos_user.form.group.class');
         $this->assertParameter('FOS\UserBundle\Form\ChangePasswordForm', 'fos_user.form.change_password.class');
         $this->assertParameter('FOS\UserBundle\Form\ResetPasswordForm', 'fos_user.form.reset_password.class');
     }
@@ -118,7 +117,6 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertParameter('fos_user_user_form', 'fos_user.form.user.name');
-        $this->assertParameter('fos_user_group_form', 'fos_user.form.group.name');
         $this->assertParameter('fos_user_change_password_form', 'fos_user.form.change_password.name');
         $this->assertParameter('fos_user_reset_password_form', 'fos_user.form.reset_password.name');
     }
@@ -138,7 +136,6 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertHasDefinition('fos_user.form.user');
-        $this->assertHasDefinition('fos_user.form.group');
         $this->assertHasDefinition('fos_user.form.change_password');
         $this->assertHasDefinition('fos_user.form.reset_password');
     }
@@ -158,7 +155,6 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertParameter('FOS\UserBundle\Controller\UserController', 'fos_user.controller.user.class');
-        $this->assertParameter('FOS\UserBundle\Controller\GroupController', 'fos_user.controller.group.class');
         $this->assertParameter('FOS\UserBundle\Controller\SecurityController', 'fos_user.controller.security.class');
     }
 
@@ -176,7 +172,6 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertHasDefinition('fos_user.controller.user');
-        $this->assertHasDefinition('fos_user.controller.group');
         $this->assertHasDefinition('fos_user.controller.security');
     }
 
@@ -195,8 +190,8 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
 
         $this->assertParameter(false, 'fos_user.email.confirmation.enabled');
         $this->assertParameter(array('webmaster@example.com' => 'webmaster'), 'fos_user.email.from_email');
-        $this->assertParameter('FOSUserBundle:User:confirmationEmail', 'fos_user.email.confirmation.template');
-        $this->assertParameter('FOSUserBundle:User:resettingPasswordEmail', 'fos_user.email.resetting_password.template');
+        $this->assertParameter('FOSUser:User:confirmationEmail', 'fos_user.email.confirmation.template');
+        $this->assertParameter('FOSUser:User:resettingPasswordEmail', 'fos_user.email.resetting_password.template');
         $this->assertParameter(86400, 'fos_user.email.resetting_password.token_ttl');
     }
 
@@ -206,8 +201,8 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
 
         $this->assertParameter(true, 'fos_user.email.confirmation.enabled');
         $this->assertParameter(array('admin@acme.org' => 'Acme Corp'), 'fos_user.email.from_email');
-        $this->assertParameter('AcmeMyBundle:Mail:confirmation', 'fos_user.email.confirmation.template');
-        $this->assertParameter('AcmeMyBundle:Mail:resetting', 'fos_user.email.resetting_password.template');
+        $this->assertParameter('AcmeMy:Mail:confirmation', 'fos_user.email.confirmation.template');
+        $this->assertParameter('AcmeMy:Mail:resetting', 'fos_user.email.resetting_password.template');
         $this->assertParameter(1800, 'fos_user.email.resetting_password.token_ttl');
     }
 
@@ -216,7 +211,7 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createEmptyConfiguration();
 
         $this->assertParameter('twig', 'fos_user.template.engine');
-        $this->assertParameter('TwigBundle::form.html.twig', 'fos_user.template.theme');
+        $this->assertParameter('Twig::form.html.twig', 'fos_user.template.theme');
     }
 
     public function testUserLoadTemplateConfig()
@@ -224,7 +219,7 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->createFullConfiguration();
 
         $this->assertParameter('php', 'fos_user.template.engine');
-        $this->assertParameter('AcmeMyBundle:Form:theme.html.twig', 'fos_user.template.theme');
+        $this->assertParameter('AcmeMy:Form:theme.html.twig', 'fos_user.template.theme');
     }
 
     public function testUserLoadEncoderConfigWithDefaults()
@@ -312,7 +307,6 @@ provider_key: fos_user
 class:
     model:
         user:  Acme\MyBundle\Document\User
-        group: FOS\UserBundle\Document\DefaultGroup
 EOF;
         $parser = new Parser();
 
@@ -327,15 +321,12 @@ provider_key: fos_user
 class:
     model:
         user: Acme\MyBundle\Entity\User
-        group: FOS\UserBundle\Entity\DefaultGroup
     form:
         user:            Acme\MyBundle\Form\User
-        group:           Acme\MyBundle\Form\Group
         change_password: Acme\MyBundle\Form\ChangePassword
         reset_password:  Acme\MyBundle\Form\ResetPassword
     controller:
         user:     Acme\MyBundle\Controller\UserController
-        group:    Acme\MyBundle\Controller\GroupController
         security: Acme\MyBundle\Controller\SecurityController
     util:
         email_canonicalizer:    Acme\MyBundle\Util\EmailCanonicalizer
@@ -349,25 +340,30 @@ encoder:
     iterations:       3
 form_name:
     user:            acme_user_form
-    group:           acme_group_form
     change_password: acme_change_form
     reset_password:  acme_reset_form
 form_validation_groups:
     user:            [test]
-    group:           [acme]
     change_password: [acme]
     reset_password:  [acme]
 email:
     from_email: { admin@acme.org: Acme Corp }
     confirmation:
         enabled:    true
-        template:   AcmeMyBundle:Mail:confirmation
+        template:   AcmeMy:Mail:confirmation
     resetting_password:
-        template:   AcmeMyBundle:Mail:resetting
+        template:   AcmeMy:Mail:resetting
         token_ttl:  1800
 template:
     engine: php
-    theme:  AcmeMyBundle:Form:theme.html.twig
+    theme:  AcmeMy:Form:theme.html.twig
+group:
+    class:
+        model:      Acme\MyBundle\Entity\Group
+        form:       Acme\MyBundle\Form\Group
+        controller: Acme\MyBundle\Controller\GroupController
+    form_name:              acme_group_form
+    form_validation_groups: [acme]
 EOF;
         $parser = new Parser();
 
