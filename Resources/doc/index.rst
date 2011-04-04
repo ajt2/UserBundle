@@ -168,7 +168,7 @@ account for example. This means that out of the box UserBundle only supports
 being used for a single firewall, though with a custom Controller this
 limitation can be circumvented.
 
-For example for a security configuration like the following the provider_key
+For example for a security configuration like the following the firewall_name
 would have to be set to "main", as shown in the proceeding examples:
 
 ::
@@ -194,7 +194,7 @@ In YAML:
     # app/config/config.yml
     fos_user:
         db_driver: orm
-        provider_key: main
+        firewall_name: main
         class:
             model:
                 user: MyProject\MyBundle\Entity\User
@@ -205,7 +205,7 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db-driver="orm" provider-key="main">
+    <fos_user:config db-driver="orm" firewall-name="main">
         <fos_user:class>
             <fos_user:model
                 user="MyProject\MyBundle\Entity\User"
@@ -223,7 +223,7 @@ In YAML:
     # app/config/config.yml
     fos_user:
         db_driver: mongodb
-        provider_key: main
+        firewall_name: main
         class:
             model:
                 user: MyProject\MyBundle\Document\User
@@ -234,7 +234,7 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db-driver="mongodb" provider-key="main">
+    <fos_user:config db-driver="mongodb" firewall-name="main">
         <fos_user:class>
             <fos_user:model
                 user="MyProject\MyBundle\Document\User"
@@ -327,6 +327,19 @@ A new instance of your User class can be created by the user manager::
 
 `$user` is now an Entity or a Document, depending on the configuration.
 
+Updating a User object
+----------------------
+
+When creating or updating a User object you need to call the ``updateUser``
+method of the user manager to update some fields (encoded password, canonical
+fields...). This will also persist the entity.
+
+.. note::
+
+    The default behavior is to flush the changes when calling this method. You
+    can disable the flush when using the ORM and the MongoDB implementations by
+    passing a second argument set to ``false``.
+
 Using groups
 ============
 
@@ -341,7 +354,7 @@ In YAML:
     # app/config/config.yml
     fos_user:
         db_driver: orm
-        provider_key: main
+        firewall_name: main
         class:
             model:
                 user: MyProject\MyBundle\Entity\User
@@ -355,7 +368,7 @@ Or if you prefer XML:
 
     # app/config/config.xml
 
-    <fos_user:config db-driver="orm" provider-key="main">
+    <fos_user:config db-driver="orm" firewall-name="main">
         <fos_user:class>
             <fos_user:model
                 user="MyProject\MyBundle\Entity\User"
@@ -478,8 +491,8 @@ All configuration options are listed below::
 
     # app/config/config.yml
     fos_user:
-        db_driver:    mongodb
-        provider_key: fos_userbundle
+        db_driver:     mongodb
+        firewall_name: main
         class:
             model:
                 user:  MyProject\MyBundle\Document\User
@@ -550,22 +563,22 @@ Here is an example of a full security configuration using FOSUserBundle::
 
         access_control:
             # The WDT has to be allowed to anonymous users to avoid requiring the login with the AJAX request
-            - { path: /_wdt/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /_profiler/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/_wdt/, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/_profiler/, role: IS_AUTHENTICATED_ANONYMOUSLY }
             # URL of the bundles which need to be available to anonymous users
-            - { path: /login, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /login_check, role: IS_AUTHENTICATED_ANONYMOUSLY } # for the case of a failed login
-            - { path: /user/new, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/check-confirmation-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/confirm/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/confirmed, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/request-reset-password, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/send-resetting-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/check-resetting-email, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            - { path: /user/reset-password/.*, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/login$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/login_check$, role: IS_AUTHENTICATED_ANONYMOUSLY } # for the case of a failed login
+            - { path: ^/user/new$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/check-confirmation-email$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/confirm/, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/confirmed$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/request-reset-password$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/send-resetting-email$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/check-resetting-email$, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/user/reset-password/, role: IS_AUTHENTICATED_ANONYMOUSLY }
             # Secured part of the site (all site here and an admin part for admin users)
-            - { path: /admin/.*, role: ROLE_ADMIN }
-            - { path: /.*, role: ROLE_USER }
+            - { path: ^/admin/, role: ROLE_ADMIN }
+            - { path: ^/.*, role: ROLE_USER }
 
         role_hierarchy:
             ROLE_ADMIN:       ROLE_USER

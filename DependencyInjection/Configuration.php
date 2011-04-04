@@ -28,7 +28,7 @@ class Configuration
         $rootNode
             ->children()
                 ->scalarNode('db_driver')->cannotBeOverwritten()->isRequired()->cannotBeEmpty()->end()
-                ->scalarNode('provider_key')->isRequired()->cannotBeEmpty()->end()
+                ->scalarNode('firewall_name')->isRequired()->cannotBeEmpty()->end()
             ->end();
 
         $this->addClassSection($rootNode);
@@ -212,6 +212,35 @@ class Configuration
                     ->children()
                         ->scalarNode('engine')->defaultValue('twig')->end()
                         ->scalarNode('theme')->defaultValue('Twig::form.html.twig')->end()
+                    ->end()
+                ->end()
+            ->end();
+    }
+
+    private function addGroupSection(ArrayNodeDefinition $node)
+    {
+        $node
+            ->canBeUnset()
+            ->children()
+                ->arrayNode('group')
+                    ->children()
+                        ->arrayNode('class')
+                            ->isRequired()
+                            ->children()
+                                ->scalarNode('model')->isRequired()->cannotBeEmpty()->end()
+                                ->scalarNode('form')->defaultValue('FOS\\UserBundle\\Form\\GroupForm')->end()
+                                ->scalarNode('controller')->defaultValue('FOS\\UserBundle\\Controller\\GroupController')->end()
+                            ->end()
+                        ->end()
+                        ->scalarNode('form_name')
+                            ->defaultValue('fos_user_group_form')
+                            ->cannotBeEmpty()
+                        ->end()
+                        ->arrayNode('form_validation_groups')
+                            ->addDefaultsIfNotSet()
+                            ->prototype('scalar')->end()
+                            ->defaultValue(array('Registration'))
+                        ->end()
                     ->end()
                 ->end()
             ->end();
