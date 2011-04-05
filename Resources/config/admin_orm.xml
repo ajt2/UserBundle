@@ -6,12 +6,12 @@
     <parameters>
         <!-- USER -->
         <parameter key="fos.user.admin.user.class">FOS\UserBundle\Admin\Entity\UserAdmin</parameter>
-        <parameter key="fos.user.admin.user.controller">FOSUser:UserAdmin</parameter>
+        <parameter key="fos.user.admin.user.controller">FOSUserBundle:UserAdmin</parameter>
         <parameter key="fos.user.admin.user.entity">Application\FOS\UserBundle\Entity\User</parameter>
 
         <!-- GROUP -->
         <parameter key="fos.user.admin.group.class">FOS\UserBundle\Admin\Entity\GroupAdmin</parameter>
-        <parameter key="fos.user.admin.group.controller">FOSUser:GroupAdmin</parameter>
+        <parameter key="fos.user.admin.group.controller">FOSUserBundle:GroupAdmin</parameter>
         <parameter key="fos.user.admin.group.entity">Application\FOS\UserBundle\Entity\Group</parameter>
     </parameters>
 
