@@ -15,6 +15,7 @@ use Sonata\AdminBundle\Admin\Admin;
 
 class UserAdmin extends Admin
 {
+    protected $id;
 
     protected $maxPerPage = 25;
     
