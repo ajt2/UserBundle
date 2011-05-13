@@ -15,7 +15,7 @@ class FOSUserExtension extends Extension
         $processor = new Processor();
         $configuration = new Configuration();
 
-        $config = $processor->process($configuration->getConfigTree(), $configs);
+        $config = $processor->processConfiguration($configuration, $configs);
 
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 
@@ -26,13 +26,13 @@ class FOSUserExtension extends Extension
 
         $loader->load(sprintf('admin_%s.xml', $config['db_driver']));
 
-        foreach (array('controller', 'form', 'validator', 'security', 'util', 'listener') as $basename) {
+        foreach (array('services', 'controller', 'form', 'validator', 'security', 'util', 'mailer', 'listener') as $basename) {
             $loader->load(sprintf('%s.xml', $basename));
         }
 
-        if (!empty($config['service']['util']['mailer'])) {
-            $container->setAlias('fos_user.util.mailer', $config['service']['util']['mailer']);
-        }
+        $container->setAlias('fos_user.mailer', $config['service']['mailer']);
+        $container->setAlias('fos_user.util.email_canonicalizer', $config['service']['email_canonicalizer']);
+        $container->setAlias('fos_user.util.username_canonicalizer', $config['service']['username_canonicalizer']);
 
         if (!empty($config['group'])) {
             $loader->load('group.xml');
@@ -40,10 +40,27 @@ class FOSUserExtension extends Extension
             $this->remapParametersNamespaces($config['group'], $container, array(
                 'class' => 'fos_user.%s.group.class',
                 '' => array(
+                    'form' => 'fos_user.form.type.group.class',
+                    'form_handler' => 'fos_user.form.handler.group.class',
                     'form_name' => 'fos_user.form.group.name',
                     'form_validation_groups' => 'fos_user.form.group.validation_groups'
                 ),
             ));
+        }
+
+        if ($config['use_listener']) {
+            switch ($config['db_driver']) {
+                case 'orm':
+                    $container->getDefinition('fos_user.user_listener')->addTag('doctrine.event_subscriber');
+                    break;
+
+                case 'mongodb':
+                    $container->getDefinition('fos_user.user_listener')->addTag('doctrine.common.event_subscriber');
+                    break;
+
+                default:
+                    break;
+            }
         }
 
         $this->remapParametersNamespaces($config, $container, array(
@@ -57,10 +74,10 @@ class FOSUserExtension extends Extension
         ));
 
         $this->remapParametersNamespaces($config['class'], $container, array(
-            'model'      => 'fos_user.model.%s.class',
-            'form'       => 'fos_user.form.%s.class',
-            'controller' => 'fos_user.controller.%s.class',
-            'util'       => 'fos_user.util.%s.class',
+            'model'         => 'fos_user.model.%s.class',
+            'form'          => 'fos_user.form.type.%s.class',
+            'form_handler'  => 'fos_user.form.handler.%s.class',
+            'controller'    => 'fos_user.controller.%s.class',
         ));
 
         $this->remapParametersNamespaces($config['email'], $container, array(

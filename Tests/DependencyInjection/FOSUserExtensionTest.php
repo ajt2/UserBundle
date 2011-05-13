@@ -97,19 +97,19 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
     {
         $this->createEmptyConfiguration();
 
-        $this->assertParameter('FOS\UserBundle\Form\UserForm', 'fos_user.form.user.class');
-        $this->assertParameter('FOS\UserBundle\Form\ChangePasswordForm', 'fos_user.form.change_password.class');
-        $this->assertParameter('FOS\UserBundle\Form\ResetPasswordForm', 'fos_user.form.reset_password.class');
+        $this->assertParameter('FOS\UserBundle\Form\UserFormType', 'fos_user.form.type.user.class');
+        $this->assertParameter('FOS\UserBundle\Form\ChangePasswordFormType', 'fos_user.form.type.change_password.class');
+        $this->assertParameter('FOS\UserBundle\Form\ResetPasswordFormType', 'fos_user.form.type.reset_password.class');
     }
 
     public function testUserLoadFormClass()
     {
         $this->createFullConfiguration();
 
-        $this->assertParameter('Acme\MyBundle\Form\User', 'fos_user.form.user.class');
-        $this->assertParameter('Acme\MyBundle\Form\Group', 'fos_user.form.group.class');
-        $this->assertParameter('Acme\MyBundle\Form\ChangePassword', 'fos_user.form.change_password.class');
-        $this->assertParameter('Acme\MyBundle\Form\ResetPassword', 'fos_user.form.reset_password.class');
+        $this->assertParameter('Acme\MyBundle\Form\UserFormType', 'fos_user.form.type.user.class');
+        $this->assertParameter('Acme\MyBundle\Form\GroupFormType', 'fos_user.form.type.group.class');
+        $this->assertParameter('Acme\MyBundle\Form\ChangePasswordFormType', 'fos_user.form.type.change_password.class');
+        $this->assertParameter('Acme\MyBundle\Form\ResetPasswordFormType', 'fos_user.form.type.reset_password.class');
     }
 
     public function testUserLoadFormNameWithDefaults()
@@ -240,34 +240,18 @@ class FOSUserExtensionTest extends \PHPUnit_Framework_TestCase
         $this->assertParameter(3, 'fos_user.encoder.iterations');
     }
 
-    public function testUserLoadUtilClassWithDefaults()
-    {
-        $this->createEmptyConfiguration();
-
-        $this->assertParameter('FOS\UserBundle\Util\Canonicalizer', 'fos_user.util.email_canonicalizer.class');
-        $this->assertParameter('FOS\UserBundle\Util\Canonicalizer', 'fos_user.util.username_canonicalizer.class');
-    }
-
-    public function testUserLoadUtilClass()
-    {
-        $this->createFullConfiguration();
-
-        $this->assertParameter('Acme\MyBundle\Util\EmailCanonicalizer', 'fos_user.util.email_canonicalizer.class');
-        $this->assertParameter('Acme\MyBundle\Util\UsernameCanonicalizer', 'fos_user.util.username_canonicalizer.class');
-    }
-
     public function testUserLoadUtilServiceWithDefaults()
     {
         $this->createEmptyConfiguration();
 
-        $this->assertAlias('fos_user.util.mailer.real', 'fos_user.util.mailer');
+        $this->assertAlias('fos_user.mailer.default', 'fos_user.mailer');
     }
 
     public function testUserLoadUtilService()
     {
         $this->createFullConfiguration();
 
-        $this->assertAlias('acme_my.util.mailer', 'fos_user.util.mailer');
+        $this->assertAlias('acme_my.mailer', 'fos_user.mailer');
     }
 
     /**
@@ -322,18 +306,16 @@ class:
     model:
         user: Acme\MyBundle\Entity\User
     form:
-        user:            Acme\MyBundle\Form\User
-        change_password: Acme\MyBundle\Form\ChangePassword
-        reset_password:  Acme\MyBundle\Form\ResetPassword
+        user:            Acme\MyBundle\Form\UserFormType
+        change_password: Acme\MyBundle\Form\ChangePasswordFormType
+        reset_password:  Acme\MyBundle\Form\ResetPasswordFormType
     controller:
         user:     Acme\MyBundle\Controller\UserController
         security: Acme\MyBundle\Controller\SecurityController
-    util:
-        email_canonicalizer:    Acme\MyBundle\Util\EmailCanonicalizer
-        username_canonicalizer: Acme\MyBundle\Util\UsernameCanonicalizer
 service:
-    util:
-        mailer: acme_my.util.mailer
+    mailer: acme_my.mailer
+    email_canonicalizer:    acme_my.email_canonicalizer
+    username_canonicalizer: acme_my.username_canonicalizer
 encoder:
     algorithm:        sha1
     encode_as_base64: true
@@ -360,8 +342,9 @@ template:
 group:
     class:
         model:      Acme\MyBundle\Entity\Group
-        form:       Acme\MyBundle\Form\Group
         controller: Acme\MyBundle\Controller\GroupController
+    form:           Acme\MyBundle\Form\GroupFormType
+    form_handler:   Acme\MyBundle\Form\GroupHandler
     form_name:              acme_group_form
     form_validation_groups: [acme]
 EOF;

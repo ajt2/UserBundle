@@ -9,11 +9,16 @@ Features
 - Current user available in your controllers and views
 - Unit tested and functionally tested
 
+Warning
+=======
+
+The supplied Controller and routing configuration files expose as much functionality as possible to illustrate how to use the Bundle. However using these exposes a lot of functionality which requires additional configuration to secure properly. As such its not recommended to ever go into production while using one of the default routing configuration files. Furthermore it may be necessary to extend or even replace the default Controllers with custom code to achieve the exact desired behavior. Trying to cover every possible use case is not feasible as it would complicate the Bundle to the point of being unmaintainable and impossible to comprehend in a reasonable amount of time.
+
 Installation
 ============
 
 Add UserBundle to your vendor/bundles/ dir
--------------------------------------
+------------------------------------------
 
 ::
 
@@ -55,8 +60,8 @@ User class in UserBundle.  All fields on the base class are mapped, except for
 your application. Feel free to add additional properties and methods to your
 custom class.
 
-ORM User class:
-~~~~~~~~~~~~~~~
+ORM User class
+~~~~~~~~~~~~~~
 
 ::
 
@@ -67,6 +72,7 @@ ORM User class:
 
     /**
      * @orm:Entity
+     * @orm:Table(name="fos_user")
      */
     class User extends BaseUser
     {
@@ -76,10 +82,20 @@ ORM User class:
          * @orm:generatedValue(strategy="AUTO")
          */
         protected $id;
+
+        public function __construct()
+        {
+            parent::__construct();
+            // your own logic
+        }
     }
 
-MongoDB User class:
-~~~~~~~~~~~~~~~~~~~
+.. note::
+
+    ``User`` is a reserved keyword in SQL so you cannot use it as table name.
+
+MongoDB User class
+~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -95,7 +111,18 @@ MongoDB User class:
     {
         /** @mongodb:Id(strategy="auto") */
         protected $id;
+
+        public function __construct()
+        {
+            parent::__construct();
+            // your own logic
+        }
     }
+
+.. warning::
+
+    Take care to call the parent constructor when you overwrite it in your own
+    entity as it initializes some fields.
 
 Configure your project
 ----------------------
@@ -113,14 +140,14 @@ enabled in your kernel and in your project's configuration::
         );
     }
 
-    # app/config/config.yml
+    # app/config/security.yml
     security:
         providers:
             # the naming of a security provider is up to you, we chose "fos_userbundle"
             fos_userbundle:
                 id: fos_user.user_manager
 
-Note::
+.. note::
 
     You need to activate SwiftmailerBundle to be able to use the functionalities
     using emails (confirmation of the account, resetting of the password).
@@ -140,6 +167,11 @@ user.xml routing file with the ``/user`` prefix they will be::
     /user/send-resetting-email
     /user/check-resetting-email
     /user/reset-password/{token}
+
+.. note::
+
+    You can look at the end of the doc for a working security configuration
+    achieving this.
 
 You also have to include the UserBundle in your Doctrine mapping configuration,
 along with the bundle containing your custom User class::
@@ -253,10 +285,10 @@ routes:
 
     # app/config/routing.yml
     fos_user_security:
-        resource: @FOSUser/Resources/config/routing/security.xml
+        resource: "@FOSUserBundle/Resources/config/routing/security.xml"
 
     fos_user_user:
-        resource: @FOSUser/Resources/config/routing/user.xml
+        resource: "@FOSUserBundle/Resources/config/routing/user.xml"
         prefix: /user
 
 ::
@@ -330,9 +362,40 @@ A new instance of your User class can be created by the user manager::
 Updating a User object
 ----------------------
 
-When creating or updating a User object you need to call the ``updateUser``
-method of the user manager to update some fields (encoded password, canonical
-fields...). This will also persist the entity.
+When creating or updating a User object you need to update the encoded password
+and the canonical fields. To make it easier, the bundle comes with a Doctrine
+listener handling this for you behind the scene.
+
+If you don't want to use the Doctrine listener, you can disable it. In this case
+you will have to call the ``updateUser`` method of the user manager each time
+you do a change in your entity.
+
+In YAML:
+
+::
+
+    # app/config/config.yml
+    fos_user:
+        db_driver: orm
+        firewall_name: main
+        use_listener: false
+        class:
+            model:
+                user: MyProject\MyBundle\Entity\User
+
+Or if you prefer XML:
+
+::
+
+    # app/config/config.xml
+
+    <fos_user:config db-driver="orm" firewall-name="main" use-listener="false">
+        <fos_user:class>
+            <fos_user:model
+                user="MyProject\MyBundle\Entity\User"
+            />
+        </fos_user:class>
+    </fos_user:config>
 
 .. note::
 
@@ -397,10 +460,21 @@ ORM
 
     /**
      * @orm:Entity
+     * @orm:Table(name="fos_group")
      */
     class Group extends BaseGroup
     {
+        /**
+         * @orm:Id
+         * @orm:Column(type="integer")
+         * @orm:generatedValue(strategy="AUTO")
+         */
+        protected $id;
     }
+
+.. note::
+
+    ``Group`` is also a reserved keyword in SQL so it cannot be used either.
 
 ODM
 ~~~
@@ -417,6 +491,8 @@ ODM
      */
     class Group extends BaseGroup
     {
+        /** @mongodb:Id(strategy="auto") */
+        protected $id;
     }
 
 Defining the relation
@@ -436,6 +512,7 @@ ORM
 
     /**
      * @orm:Entity
+     * @orm:Table(name="fos_user")
      */
     class User extends BaseUser
     {
@@ -484,8 +561,8 @@ Enabling the routing for the GroupController
 You can also the group.xml file to use the builtin controller to manipulate the
 groups.
 
-Configuration example:
-======================
+Configuration reference
+=======================
 
 All configuration options are listed below::
 
@@ -493,6 +570,7 @@ All configuration options are listed below::
     fos_user:
         db_driver:     mongodb
         firewall_name: main
+        use_listener:  true
         class:
             model:
                 user:  MyProject\MyBundle\Document\User
@@ -503,12 +581,10 @@ All configuration options are listed below::
             controller:
                 user:     ~
                 security: ~
-            util:
-                email_canonicalizer:    ~
-                username_canonicalizer: ~
         service:
-            util:
-                mailer: ~
+            mailer: ~
+            email_canonicalizer:    ~
+            username_canonicalizer: ~
         encoder:
             algorithm:        ~
             encode_as_base64: ~
@@ -538,10 +614,28 @@ All configuration options are listed below::
             form_name: ~
             form_validation_groups: ~
 
+Configuration example
+=====================
+
+This section provides a working configuration for the bundle and the security.
+
+FOSUserBundle configuration
+---------------------------
+
+::
+
+    # app/config/config.yml
+    fos_user:
+        db_driver:     orm
+        firewall_name: main
+        class:
+            model:
+                user:  MyProject\MyBundle\Entity\User
+
 Security configuration
 ----------------------
 
-Here is an example of a full security configuration using FOSUserBundle::
+::
 
     # app/config/security.yml
     security:
@@ -565,7 +659,10 @@ Here is an example of a full security configuration using FOSUserBundle::
             # The WDT has to be allowed to anonymous users to avoid requiring the login with the AJAX request
             - { path: ^/_wdt/, role: IS_AUTHENTICATED_ANONYMOUSLY }
             - { path: ^/_profiler/, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            # URL of the bundles which need to be available to anonymous users
+            # AsseticBundle paths used when using the controller for assets
+            - { path: ^/js/, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            - { path: ^/css/, role: IS_AUTHENTICATED_ANONYMOUSLY }
+            # URL of FOSUserBundle which need to be available to anonymous users
             - { path: ^/login$, role: IS_AUTHENTICATED_ANONYMOUSLY }
             - { path: ^/login_check$, role: IS_AUTHENTICATED_ANONYMOUSLY } # for the case of a failed login
             - { path: ^/user/new$, role: IS_AUTHENTICATED_ANONYMOUSLY }
@@ -576,7 +673,9 @@ Here is an example of a full security configuration using FOSUserBundle::
             - { path: ^/user/send-resetting-email$, role: IS_AUTHENTICATED_ANONYMOUSLY }
             - { path: ^/user/check-resetting-email$, role: IS_AUTHENTICATED_ANONYMOUSLY }
             - { path: ^/user/reset-password/, role: IS_AUTHENTICATED_ANONYMOUSLY }
-            # Secured part of the site (all site here and an admin part for admin users)
+            # Secured part of the site
+            # This config requires being logged for the whole site and having the admin role for the admin part.
+            # Change these rules to adapt them to your needs
             - { path: ^/admin/, role: ROLE_ADMIN }
             - { path: ^/.*, role: ROLE_USER }
 
@@ -584,8 +683,8 @@ Here is an example of a full security configuration using FOSUserBundle::
             ROLE_ADMIN:       ROLE_USER
             ROLE_SUPERADMIN:  ROLE_ADMIN
 
-Replacing some part by your own implementation:
-===============================================
+Replacing some part by your own implementation
+==============================================
 
 Templating
 ----------
@@ -595,7 +694,7 @@ to extend a bundle by defining a template in the app/ directory.
 
 For example ``vendor/bundles/FOS/UserBundle/Resources/views/User/new.twig`` can be
 replaced inside an application by putting a file with alternative content in
-``app/Resources/FOSUser/views/User/new.twig``.
+``app/Resources/FOSUserBundle/views/User/new.twig``.
 
 You could also create a bundle defined as child of FOSUserBundle and placing the
 templates in it.
@@ -615,14 +714,18 @@ Emails
 
 The default mailer relies on Swiftmailer to send the mails of the bundle. If you
 want to use another mailer in your project you can change it by defining your
-own service implementing ``FOS\UserBundle\Util\MailerInterface`` and setting its
+own service implementing ``FOS\UserBundle\Mailer\MailerInterface`` and setting its
 id in the configuration::
 
     fos_user:
         # ...
         service:
-            util:
-                mailer: custom_mailer_id
+            mailer: custom_mailer_id
+
+This bundle comes with two mailer implementations.
+
+- `fos_user.mailer.default` is the default implementation, and uses swiftmailer to send emails.
+- `fos_user.mailer.noop` does nothing and can be used if your project does not depend on swiftmailer.
 
 Canonicalization
 ----------------
@@ -633,7 +736,7 @@ canonicalized in the same manner using ``mb_convert_case()``. You may configure
 your own class for each field provided it implements
 ``FOS\UserBundle\Util\CanonicalizerInterface``.
 
-Note::
+.. note::
 
     If you do not have the mbstring extension installed you will need to
     define your own ``canonicalizer``.

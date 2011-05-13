@@ -20,7 +20,7 @@
 
         <property name="username">
             <constraint name="NotBlank">
-                <option name="message">Please enter an username</option>
+                <option name="message">Please enter a username</option>
                 <option name="groups">Registration</option>
                 <option name="groups">admin</option>
             </constraint>

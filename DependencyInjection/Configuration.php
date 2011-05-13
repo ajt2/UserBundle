@@ -4,6 +4,7 @@ namespace FOS\UserBundle\DependencyInjection;
 
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * This class contains the configuration information for the bundle
@@ -13,14 +14,14 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
  *
  * @author Christophe Coevoet <stof@notk.org>
  */
-class Configuration
+class Configuration implements ConfigurationInterface
 {
     /**
      * Generates the configuration tree.
      *
-     * @return \Symfony\Component\DependencyInjection\Configuration\NodeInterface
+     * @return TreeBuilder
      */
-    public function getConfigTree()
+    public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('fos_user');
@@ -29,6 +30,7 @@ class Configuration
             ->children()
                 ->scalarNode('db_driver')->cannotBeOverwritten()->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('firewall_name')->isRequired()->cannotBeEmpty()->end()
+                ->booleanNode('use_listener')->defaultTrue()->end()
             ->end();
 
         $this->addClassSection($rootNode);
@@ -40,7 +42,7 @@ class Configuration
         $this->addTemplateSection($rootNode);
         $this->addGroupSection($rootNode);
 
-        return $treeBuilder->buildTree();
+        return $treeBuilder;
     }
 
     private function addClassSection(ArrayNodeDefinition $node)
@@ -60,9 +62,17 @@ class Configuration
                         ->arrayNode('form')
                             ->addDefaultsIfNotSet()
                             ->children()
-                                ->scalarNode('user')->defaultValue('FOS\\UserBundle\\Form\\UserForm')->end()
-                                ->scalarNode('change_password')->defaultValue('FOS\\UserBundle\\Form\\ChangePasswordForm')->end()
-                                ->scalarNode('reset_password')->defaultValue('FOS\\UserBundle\\Form\\ResetPasswordForm')->end()
+                                ->scalarNode('user')->defaultValue('FOS\\UserBundle\\Form\\UserFormType')->end()
+                                ->scalarNode('change_password')->defaultValue('FOS\\UserBundle\\Form\\ChangePasswordFormType')->end()
+                                ->scalarNode('reset_password')->defaultValue('FOS\\UserBundle\\Form\\ResetPasswordFormType')->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('form_handler')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->scalarNode('user')->defaultValue('FOS\\UserBundle\\Form\\UserFormHandler')->end()
+                                ->scalarNode('change_password')->defaultValue('FOS\\UserBundle\\Form\\ChangePasswordFormHandler')->end()
+                                ->scalarNode('reset_password')->defaultValue('FOS\\UserBundle\\Form\\ResetPasswordFormHandler')->end()
                             ->end()
                         ->end()
                         ->arrayNode('controller')
@@ -70,13 +80,6 @@ class Configuration
                             ->children()
                                 ->scalarNode('user')->defaultValue('FOS\\UserBundle\\Controller\\UserController')->end()
                                 ->scalarNode('security')->defaultValue('FOS\\UserBundle\\Controller\\SecurityController')->end()
-                            ->end()
-                        ->end()
-                        ->arrayNode('util')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->scalarNode('email_canonicalizer')->defaultValue('FOS\\UserBundle\\Util\\Canonicalizer')->end()
-                                ->scalarNode('username_canonicalizer')->defaultValue('FOS\\UserBundle\\Util\\Canonicalizer')->end()
                             ->end()
                         ->end()
                     ->end()
@@ -87,13 +90,14 @@ class Configuration
     private function addServiceSection(ArrayNodeDefinition $node)
     {
         $node
+            ->addDefaultsIfNotSet()
             ->children()
                 ->arrayNode('service')
-                    ->children()
-                        ->arrayNode('util')
-                            ->children()
-                                ->scalarNode('mailer')->end()
-                            ->end()
+                    ->addDefaultsIfNotSet()
+                        ->children()
+                            ->scalarNode('mailer')->defaultValue('fos_user.mailer.default')->end()
+                            ->scalarNode('email_canonicalizer')->defaultValue('fos_user.util.email_canonicalizer.default')->end()
+                            ->scalarNode('username_canonicalizer')->defaultValue('fos_user.util.username_canonicalizer.default')->end()
                         ->end()
                     ->end()
                 ->end()
@@ -228,10 +232,11 @@ class Configuration
                             ->isRequired()
                             ->children()
                                 ->scalarNode('model')->isRequired()->cannotBeEmpty()->end()
-                                ->scalarNode('form')->defaultValue('FOS\\UserBundle\\Form\\GroupForm')->end()
                                 ->scalarNode('controller')->defaultValue('FOS\\UserBundle\\Controller\\GroupController')->end()
                             ->end()
                         ->end()
+                        ->scalarNode('form')->defaultValue('FOS\\UserBundle\\Form\\GroupFormType')->end()
+                        ->scalarNode('form_handler')->defaultValue('FOS\\UserBundle\\Form\\GroupFormHandler')->end()
                         ->scalarNode('form_name')
                             ->defaultValue('fos_user_group_form')
                             ->cannotBeEmpty()
