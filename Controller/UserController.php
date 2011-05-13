@@ -33,7 +33,7 @@ class UserController extends ContainerAware
     {
         $users = $this->container->get('fos_user.user_manager')->findUsers();
 
-        return $this->container->get('templating')->renderResponse('FOSUser:User:list.html.'.$this->getEngine(), array('users' => $users));
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:list.html.'.$this->getEngine(), array('users' => $users));
     }
 
     /**
@@ -114,7 +114,7 @@ class UserController extends ContainerAware
 
         $this->setFlash('fos_user_user_confirm', 'success');
 
-        return $this->container->get('templating')->renderResponse('FOSUser:User:checkConfirmationEmail.html.'.$this->getEngine(), array(
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:checkConfirmationEmail.html.'.$this->getEngine(), array(
             'user' => $user,
         ));
     }
@@ -142,7 +142,7 @@ class UserController extends ContainerAware
         $user = $this->getUser();
 
         $this->setFlash('fos_user_user_confirmed', 'success');
-        return $this->container->get('templating')->renderResponse('FOSUser:User:confirmed.html.'.$this->getEngine(), array(
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:confirmed.html.'.$this->getEngine(), array(
             'user' => $user,
         ));
     }
@@ -200,7 +200,7 @@ class UserController extends ContainerAware
      */
     public function requestResetPasswordAction()
     {
-        return $this->container->get('templating')->renderResponse('FOSUser:User:requestResetPassword.html.'.$this->getEngine());
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:requestResetPassword.html.'.$this->getEngine());
     }
 
     /**
@@ -211,7 +211,7 @@ class UserController extends ContainerAware
         $user = $this->findUserBy('username', $this->container->get('request')->get('username'));
 
         if ($user->isPasswordRequestNonExpired($this->getPasswordRequestTtl())) {
-            return $this->container->get('templating')->renderResponse('FOSUser:User:passwordAlreadyRequested.html.'.$this->getEngine());
+            return $this->container->get('templating')->renderResponse('FOSUserBundle:User:passwordAlreadyRequested.html.'.$this->getEngine());
         }
 
         $user->generateConfirmationToken();
@@ -237,7 +237,7 @@ class UserController extends ContainerAware
 
         $this->setFlash('fos_user_user_reset', 'success');
 
-        return $this->container->get('templating')->renderResponse('FOSUser:User:checkResettingEmail.html.'.$this->getEngine(), array(
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:checkResettingEmail.html.'.$this->getEngine(), array(
             'user' => $user,
         ));
     }
@@ -257,7 +257,7 @@ class UserController extends ContainerAware
         $formHandler = $this->container->get('fos_user.form.handler.reset_password');
         $formHandler->process($user);
 
-        return $this->container->get('templating')->renderResponse('FOSUser:User:resetPassword.html.'.$this->getEngine(), array(
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:resetPassword.html.'.$this->getEngine(), array(
             'token' => $token,
             'form' => $form->createView()
         ));
@@ -286,7 +286,7 @@ class UserController extends ContainerAware
             return new RedirectResponse($url);
         }
 
-        return $this->container->get('templating')->renderResponse('FOSUser:User:resetPassword.html.'.$this->getEngine(), array(
+        return $this->container->get('templating')->renderResponse('FOSUserBundle:User:resetPassword.html.'.$this->getEngine(), array(
             'token' => $token,
             'form' => $form->createView()
         ));
