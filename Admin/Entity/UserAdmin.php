@@ -15,6 +15,13 @@ use Sonata\AdminBundle\Admin\Admin;
 
 class UserAdmin extends Admin
 {
+    /**
+     * @orm:Id
+     * @orm:Column(type="integer")
+     * @orm:generatedValue(strategy="AUTO")
+     */
+    protected $id;
+
     protected $maxPerPage = 25;
     
     protected $list = array(
